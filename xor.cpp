@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <emmintrin.h>
 
 using namespace std;
 using TimePoint = chrono::high_resolution_clock::time_point;
@@ -83,6 +84,44 @@ void measure_chunked_xor(const uint8_t* source, size_t size) {
     printMeasure("ChunkedXOR", duration, result);
 }
 
+uint8_t simd_xor(const uint8_t* bytes, size_t size) {
+    uint8_t result = 0;
+
+    size_t simd_chunks = size / 16;
+    __m128i xor_result = _mm_setzero_si128();
+
+    for (size_t i = 0; i < simd_chunks; i++) {
+        __m128i chunk = _mm_loadu_si128(reinterpret_cast<const __m128i*>(bytes + i * 16));
+        xor_result = _mm_xor_si128(xor_result, chunk);
+    }
+
+    alignas(16) uint8_t temp[16];
+    _mm_store_si128(reinterpret_cast<__m128i*>(temp), xor_result);
+
+    for (int i = 0; i < 16; i++) {
+        result ^= temp[i];
+    }
+
+    size_t remaining_start = simd_chunks * 16;
+    for (size_t i = remaining_start; i < size; i++) {
+        result ^= bytes[i];
+    }
+
+    return result;
+}
+
+void measure_simd_xor(const uint8_t* source, size_t size) {
+    std::unique_ptr<uint8_t[]> bytes(new uint8_t[size]);
+    copyByteArray(source, bytes.get(), size);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    uint8_t result = simd_xor(bytes.get(), size);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    double duration = countDuration(start, end);
+    printMeasure("SIMD_XOR", duration, result);
+}
+
 uint8_t compact_xor(const int freq[256]) {
     uint8_t result = 0;
     for (int i = 0; i < 256; i++) {
@@ -149,6 +188,7 @@ int main() {
     cout << "Measuring XOR performance..." << endl;
     measure_simple_xor(bytes.get(), size);
     measure_chunked_xor(bytes.get(), size);
+    measure_simd_xor(bytes.get(), size);
     measure_compact_xor(bytes.get(), size);
     measure_bit_parallel_xor(bytes.get(), size);
 
