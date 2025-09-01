@@ -122,7 +122,7 @@ void measure_simd_xor(const uint8_t* source, size_t size) {
     printMeasure("SIMD_XOR", duration, result);
 }
 
-uint8_t compact_xor(const int freq[256]) {
+uint8_t count_xor(const int freq[256]) {
     uint8_t result = 0;
     for (int i = 0; i < 256; i++) {
         if (freq[i] & 1) result ^= i;
@@ -130,18 +130,18 @@ uint8_t compact_xor(const int freq[256]) {
     return result;
 }
 
-void measure_compact_xor(const uint8_t* source, size_t size) {
+void measure_count_xor(const uint8_t* source, size_t size) {
     std::unique_ptr<uint8_t[]> bytes(new uint8_t[size]);
     copyByteArray(source, bytes.get(), size);
 
     int freq[256] = {0};
     for (size_t i = 0; i < size; i++) freq[bytes[i]]++;
     auto start = std::chrono::high_resolution_clock::now();
-    uint8_t result = compact_xor(freq);
+    uint8_t result = count_xor(freq);
     auto end = std::chrono::high_resolution_clock::now();
 
     double duration = countDuration(start, end);
-    printMeasure("CompactXOR", duration, result);
+    printMeasure("CountXOR", duration, result);
 }
 
 uint8_t bit_parallel_xor(const int bit_counts[8]) {
@@ -187,7 +187,7 @@ int main() {
     measure_simple_xor(bytes.get(), size);
     measure_chunked_xor(bytes.get(), size);
     measure_simd_xor(bytes.get(), size);
-    measure_compact_xor(bytes.get(), size);
+    measure_count_xor(bytes.get(), size);
     measure_bit_parallel_xor(bytes.get(), size);
 
     return 0;
