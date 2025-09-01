@@ -182,10 +182,8 @@ int main() {
     const size_t size = 10000000;
     std::unique_ptr<uint8_t[]> bytes(new uint8_t[size]);
 
-    cout << "Generating " << size << " bytes..." << endl;
     generateByteArray(bytes.get(), size);
 
-    cout << "Measuring XOR performance..." << endl;
     measure_simple_xor(bytes.get(), size);
     measure_chunked_xor(bytes.get(), size);
     measure_simd_xor(bytes.get(), size);
