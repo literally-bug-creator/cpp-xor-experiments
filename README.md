@@ -22,7 +22,7 @@ This research project is useful for:
 
 # How to contribute?
 
-We welcome contributions! Here's how you can help:
+We welcome contributions!
 
 # License
 
